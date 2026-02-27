@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fehler-Detektiv: Das Pronomen СВОЙ</title>
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            margin: 0;
+            padding: 10px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .main-container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+
+        .intro {
+            background: #eef7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent);
+        }
+
+        .task-card {
+            border: 1px solid #e1e8ed;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            background: #fff;
+            position: relative;
+        }
+
+        .sentence-container {
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            line-height: 2;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .clickable-word {
+            padding: 2px 6px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: all 0.2s;
+            border-bottom: 2px transparent;
+        }
+
+        .clickable-word:hover {
+            background-color: #f0f0f0;
+            border-bottom: 2px solid var(--accent);
+        }
+
+        /* Status-Farben */
+        .correct { color: white !important; background-color: var(--success) !important; }
+        .incorrect { color: white !important; background-color: var(--error) !important; }
+        .selected-error { background-color: #ffeaa7; border-bottom: 2px solid #fdcb6e; }
+
+        /* Selection Menu */
+        .selection-menu {
+            display: none;
+            background: white;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 10px;
+            margin-top: 10px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .selection-menu button {
+            background: #f1f3f5;
+            border: 1px solid #dee2e6;
+            padding: 5px 12px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .selection-menu button:hover { background: #e9ecef; }
+
+        .explanation-text {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            font-size: 0.95rem;
+            color: #856404;
+        }
+
+        .btn-group {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-sol { background: var(--accent); color: white; }
+
+        @media (max-width: 600px) {
+            .main-container { padding: 15px; }
+            .sentence-container { font-size: 1.1rem; }
+            .action-btn { flex: 1; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="main-container">
+    <h1>Fehler-Detektiv: СВОЙ</h1>
+    
+    <div class="intro">
+        <strong>Anleitung:</strong> In jedem Satz gibt es einen Fehler bei der Verwendung von <strong>СВОЙ</strong> (oder es wurde fälschlicherweise ein anderes Pronomen benutzt). 
+        <br><br>
+        1. Klicke auf das <strong>falsche Wort</strong>.<br>
+        2. Wähle die <strong>richtige Korrektur</strong> aus dem erscheinenden Menü.
+    </div>
+
+    <div id="tasks-container"></div>
+</div>
+
+<script>
+    const tasks = [
+        {
+            id: 1,
+            sentence: ["Я", "люблю", "мой", "город."],
+            errorIndex: 2,
+            options: ["свой", "моего", "мой"],
+            correctOption: "свой",
+            expl: "Regel: Wenn das Subjekt (Я) der Besitzer ist, verwendet man im Russischen СВОЙ statt МОЙ."
+        },
+        {
+            id: 2,
+            sentence: ["Анна", "читает", "её", "книгу."],
+            errorIndex: 2,
+            options: ["свой", "свою", "её"],
+            correctOption: "свою",
+            expl: "Bedeutung: Wenn es Annas eigene Buch ist, muss es СВОЮ heißen. ЕЁ würde bedeuten, sie liest das Buch einer anderen Frau."
+        },
+        {
+            id: 3,
+            sentence: ["Мы", "знаем", "наше", "дело."],
+            errorIndex: 2,
+            options: ["своё", "наш", "наше"],
+            correctOption: "своё",
+            expl: "Regel: Bei 'Мы' (Subjekt) wird für den eigenen Besitz das reflexive Pronomen СВОЁ (sächlich für дело) bevorzugt."
+        },
+        {
+            id: 4,
+            sentence: ["Ты", "ищешь", "твои", "ключи."],
+            errorIndex: 2,
+            options: ["свои", "твой", "твои"],
+            correctOption: "свои",
+            expl: "Regel: Reflexivbezug zum Subjekt 'Ты'. Plural von СВОЙ ist СВОИ."
+        },
+        {
+            id: 5,
+            sentence: ["Он", "забыл", "его", "паспорт."],
+            errorIndex: 2,
+            options: ["свою", "свой", "его"],
+            correctOption: "свой",
+            expl: "Bedeutung: СВОЙ zeigt an, dass es sein eigener Pass ist. ЕГО wäre der Pass eines anderen Mannes."
+        },
+        {
+            id: 6,
+            sentence: ["Они", "любят", "их", "детей."],
+            errorIndex: 2,
+            options: ["своих", "свои", "их"],
+            correctOption: "своих",
+            expl: "Fall: Akkusativ Plural belebt (детей) erfordert die Endung СВОИХ."
+        },
+        {
+            id: 7,
+            sentence: ["Она", "видит", "её", "ошибку."],
+            errorIndex: 2,
+            options: ["свой", "свою", "её"],
+            correctOption: "свою",
+            expl: "Akkusativ weiblich: 'ошибка' ist weiblich, daher 'свою'."
+        },
+        {
+            id: 8,
+            sentence: ["Вы", "пьёте", "ваш", "чай."],
+            errorIndex: 2,
+            options: ["свой", "свою", "ваш"],
+            correctOption: "свой",
+            expl: "Regel: Bevorzugung von СВОЙ bei Besitz durch das Subjekt 'Вы'."
+        },
+        {
+            id: 9,
+            sentence: ["Студент", "взял", "его", "рюкзак."],
+            errorIndex: 2,
+            options: ["свой", "его", "своё"],
+            correctOption: "свой",
+            expl: "Bedeutung: Er nimmt seinen eigenen Rucksack (свой)."
+        },
+        {
+            id: 10,
+            sentence: ["Виктор", "доволен", "его", "работой."],
+            errorIndex: 2,
+            options: ["своей", "его", "своим"],
+            correctOption: "своей",
+            expl: "Fall: Instrumental weiblich (работой) erfordert СВОЕЙ."
+        }
+    ];
+
+    function renderTasks() {
+        const container = document.getElementById('tasks-container');
+        tasks.forEach(task => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.id = `task-${task.id}`;
+
+            const sentenceHtml = task.sentence.map((word, index) => 
+                `<span class="clickable-word" onclick="handleWordClick(${task.id}, ${index})">${word}</span>`
+            ).join('');
+
+            const optionsHtml = task.options.map(opt => 
+                `<button onclick="handleOptionSelect(${task.id}, '${opt}')">${opt}</button>`
+            ).join('');
+
+            card.innerHTML = `
+                <div class="sentence-container">${sentenceHtml}</div>
+                <div class="selection-menu" id="menu-${task.id}">
+                    <span style="font-size:0.8rem; width:100%; display:block; margin-bottom:5px;">Wähle die Korrektur:</span>
+                    ${optionsHtml}
+                </div>
+                <div class="explanation-area" id="expl-${task.id}"></div>
+                <div class="btn-group">
+                    <button class="action-btn btn-reset" onclick="resetTask(${task.id})">Zurücksetzen</button>
+                    <button class="action-btn btn-sol" onclick="showSolution(${task.id})">Lösung</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    function handleWordClick(taskId, wordIndex) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        const words = card.querySelectorAll('.clickable-word');
+        const menu = document.getElementById(`menu-${taskId}`);
+
+        // Alles zurücksetzen
+        words.forEach(w => w.classList.remove('selected-error', 'incorrect'));
+        menu.style.display = 'none';
+
+        if (wordIndex === task.errorIndex) {
+            words[wordIndex].classList.add('selected-error');
+            menu.style.display = 'flex';
+        } else {
+            // Feedback für falsches Klicken (Wort ist eigentlich richtig)
+            words[wordIndex].classList.add('incorrect');
+            setTimeout(() => words[wordIndex].classList.remove('incorrect'), 500);
+        }
+    }
+
+    function handleOptionSelect(taskId, selectedValue) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        const errorWordSpan = card.querySelectorAll('.clickable-word')[task.errorIndex];
+        const menu = document.getElementById(`menu-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+
+        if (selectedValue === task.correctOption) {
+            errorWordSpan.innerText = selectedValue;
+            errorWordSpan.className = 'clickable-word correct';
+            menu.style.display = 'none';
+            expl.innerText = "Richtig! " + task.expl;
+            expl.style.display = 'block';
+        } else {
+            // Falsche Option gewählt
+            alert("Das ist nicht die richtige Form. Versuche es noch einmal!");
+        }
+    }
+
+    function showSolution(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        const errorWordSpan = card.querySelectorAll('.clickable-word')[task.errorIndex];
+        const menu = document.getElementById(`menu-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+
+        errorWordSpan.innerText = task.correctOption;
+        errorWordSpan.className = 'clickable-word correct';
+        menu.style.display = 'none';
+        expl.innerText = "Lösung: „" + task.correctOption + "“ | " + task.expl;
+        expl.style.display = 'block';
+    }
+
+    function resetTask(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        const words = card.querySelectorAll('.clickable-word');
+        const menu = document.getElementById(`menu-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+
+        // Text zurücksetzen
+        words[task.errorIndex].innerText = task.sentence[task.errorIndex];
+        words.forEach(w => w.className = 'clickable-word');
+        
+        menu.style.display = 'none';
+        expl.style.display = 'none';
+    }
+
+    // Start
+    renderTasks();
+</script>
+
+</body>
+</html>
