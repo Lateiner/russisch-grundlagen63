@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hörübung: СВОЙ vs. ЕГО/ЕЁ/ИХ (Männliche Stimme)</title>
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        /* Verbot von Kursivschrift */
+        * {
+            font-style: normal !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: #eef7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .task-card {
+            border: 1px solid #e1e8ed;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .audio-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .btn-play {
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-play:hover { transform: scale(1.05); background-color: #2980b9; }
+        .btn-play:active { transform: scale(0.95); }
+
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .option-btn {
+            padding: 15px;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            background: #fff;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+        }
+
+        .option-btn:hover { border-color: var(--accent); background: #f8fbff; }
+
+        /* Feedback-Zustände */
+        .correct { background-color: var(--success) !important; border-color: var(--success) !important; color: white !important; }
+        .incorrect { background-color: var(--error) !important; border-color: var(--error) !important; color: white !important; }
+
+        .explanation-box {
+            display: none;
+            margin-top: 15px;
+            padding: 15px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .revealed-sentence {
+            font-size: 1.15rem;
+            font-weight: bold;
+            color: var(--primary);
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            flex: 1;
+            transition: opacity 0.3s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-solution { background: var(--accent); color: white; }
+        .action-btn:hover { opacity: 0.9; }
+
+        @media (max-width: 600px) {
+            .options-grid { grid-template-columns: 1fr; }
+            .container { padding: 15px; }
+            .btn-play { width: 45px; height: 45px; font-size: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Hörübung: Wessen Sache?</h1>
+    
+    <div class="instructions">
+        <strong>Anleitung:</strong> Klicke auf das Play-Symbol, um den Satz mit einer <strong>männlichen Stimme</strong> zu hören. Entscheide dann: Gehört die Sache dem Subjekt selbst oder einer anderen Person?
+        <br><br>
+        ✅ <strong>СВОЙ</strong> = eigener Besitz | ❌ <strong>ЕГО/ЕЁ/ИХ</strong> = fremder Besitz.
+    </div>
+
+    <div id="exercise-root"></div>
+</div>
+
+<script>
+    const tasks = [
+        { id: 1, text: "Он читает свою газету.", type: "eigen", expl: "Das reflexive Pronomen 'свою' zeigt an, dass er seine eigene Zeitung liest." },
+        { id: 2, text: "Антон взял его телефон.", type: "fremd", expl: "'Его' bedeutet hier, dass das Telefon einem anderen Mann gehört." },
+        { id: 3, text: "Студент потерял свой паспорт.", type: "eigen", expl: "'Свой' bezieht sich auf den Studenten selbst." },
+        { id: 4, text: "Виктор увидел её машину.", type: "fremd", expl: "'Её' bedeutet, dass das Auto einer anderen Frau gehört." },
+        { id: 5, text: "Они ищут свой дом.", type: "eigen", expl: "'Свой' bedeutet, es ist ihr eigenes Haus, in dem sie wohnen." },
+        { id: 6, text: "Отец любит его собаку.", type: "fremd", expl: "'Его' bedeutet, der Vater mag den Hund eines anderen Mannes." },
+        { id: 7, text: "Я забыл свои ключи.", type: "eigen", expl: "Reflexiver Bezug auf das Subjekt 'Ich'. Es sind meine eigenen Schlüssel." },
+        { id: 8, text: "Она открыла её шкаф.", type: "fremd", expl: "Sie hat den Schrank einer anderen Frau geöffnet." },
+        { id: 9, text: "Мы строим свой бизнес.", type: "eigen", expl: "'Свой' zeigt an, dass es unsere eigene Firma ist." },
+        { id: 10, text: "Друзья знают их секреты.", type: "fremd", expl: "'Их' bedeutet, die Freunde kennen die Geheimnisse anderer Leute." }
+    ];
+
+    let russianMaleVoice = null;
+
+    // Funktion zum Finden einer männlichen russischen Stimme
+    function findMaleVoice() {
+        const voices = window.speechSynthesis.getVoices();
+        // Suche nach russischen Stimmen
+        const ruVoices = voices.filter(v => v.lang.startsWith('ru'));
+        
+        // Suche nach bekannten Namen für männliche Stimmen oder dem Keyword 'male'
+        russianMaleVoice = ruVoices.find(v => 
+            v.name.toLowerCase().includes('maxim') || 
+            v.name.toLowerCase().includes('pavel') || 
+            v.name.toLowerCase().includes('dmitry') || 
+            v.name.toLowerCase().includes('male')
+        ) || ruVoices[0]; // Fallback auf erste verfügbare russische Stimme
+    }
+
+    // Stimmen laden (Chrome/Safari Fix)
+    window.speechSynthesis.onvoiceschanged = findMaleVoice;
+
+    function playAudio(text) {
+        if (!window.speechSynthesis) return;
+        window.speechSynthesis.cancel(); // Stop laufende Ansagen
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (russianMaleVoice) {
+            utterance.voice = russianMaleVoice;
+        }
+        utterance.lang = 'ru-RU';
+        utterance.rate = 0.85; // Etwas langsamer für besseres Verständnis
+        window.speechSynthesis.speak(utterance);
+    }
+
+    function renderExercises() {
+        const root = document.getElementById('exercise-root');
+        tasks.forEach(t => {
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.id = `card-${t.id}`;
+
+            card.innerHTML = `
+                <div class="audio-section">
+                    <button class="btn-play" onclick="playAudio('${t.text}')">▶</button>
+                    <span>Satz anhören (männliche Stimme)</span>
+                </div>
+                <div class="options-grid">
+                    <button class="option-btn" onclick="checkAnswer(${t.id}, 'eigen')">Eigener Besitz (СВОЙ)</button>
+                    <button class="option-btn" onclick="checkAnswer(${t.id}, 'fremd')">Fremder Besitz (ЕГО/ЕЁ/ИХ)</button>
+                </div>
+                <div class="explanation-box" id="expl-${t.id}"></div>
+                <div class="controls">
+                    <button class="action-btn btn-reset" onclick="resetTask(${t.id})">Zurücksetzen</button>
+                    <button class="action-btn btn-solution" onclick="showSolution(${t.id})">Lösung</button>
+                </div>
+            `;
+            root.appendChild(card);
+        });
+    }
+
+    function checkAnswer(taskId, selectedType) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`card-${taskId}`);
+        const buttons = card.querySelectorAll('.option-btn');
+        
+        buttons.forEach(btn => btn.className = 'option-btn');
+
+        const isCorrect = (selectedType === task.type);
+        const clickedBtn = (selectedType === 'eigen') ? buttons[0] : buttons[1];
+
+        clickedBtn.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+
+    function showSolution(taskId) {
+        const task = tasks.find(t => t.id === taskId);
+        const card = document.getElementById(`card-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+        const buttons = card.querySelectorAll('.option-btn');
+
+        buttons.forEach(btn => btn.className = 'option-btn');
+        if (task.type === 'eigen') buttons[0].classList.add('correct');
+        else buttons[1].classList.add('correct');
+
+        expl.innerHTML = `
+            <span class="revealed-sentence">Satz: „${task.text}“</span>
+            <strong>Erklärung:</strong> ${task.expl}
+        `;
+        expl.style.display = 'block';
+    }
+
+    function resetTask(taskId) {
+        const card = document.getElementById(`card-${taskId}`);
+        const buttons = card.querySelectorAll('.option-btn');
+        const expl = document.getElementById(`expl-${taskId}`);
+        
+        buttons.forEach(btn => btn.className = 'option-btn');
+        expl.style.display = 'none';
+    }
+
+    // Initialisierung
+    window.onload = () => {
+        findMaleVoice();
+        renderExercises();
+    };
+</script>
+
+</body>
+</html>
