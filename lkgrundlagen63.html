@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vokabel-Lernkartei: СВОЙ & Verben</title>
+    <style>
+        :root {
+            --primary-green: #27ae60;
+            --light-green: #ebf5fb;
+            --dark-green: #1e8449;
+            --accent-green: #2ecc71;
+            --bg-color: #f4f7f6;
+            --card-shadow: rgba(0, 0, 0, 0.1);
+            --text-color: #2c3e50;
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 600px;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--dark-green);
+            margin-bottom: 10px;
+            font-size: 1.8rem;
+        }
+
+        .progress {
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: var(--primary-green);
+            font-size: 1.1rem;
+        }
+
+        /* Flashcard Styles */
+        .flashcard-container {
+            perspective: 1000px;
+            width: 100%;
+            height: 350px;
+            cursor: pointer;
+            margin-bottom: 30px;
+        }
+
+        .flashcard {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            transform-style: preserve-3d;
+            box-shadow: 0 10px 25px var(--card-shadow);
+            border-radius: 15px;
+        }
+
+        .flashcard.flipped {
+            transform: rotateY(180deg);
+        }
+
+        .card-face {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px;
+            border-radius: 15px;
+            background: white;
+            border: 2px solid var(--primary-green);
+        }
+
+        .card-face.back {
+            transform: rotateY(180deg);
+            background-color: var(--light-green);
+        }
+
+        .vocab-text {
+            font-weight: bold;
+            margin: 0;
+            word-wrap: break-word;
+            width: 100%;
+        }
+
+        .note {
+            margin-top: 15px;
+            font-size: 0.95rem;
+            color: #7f8c8d;
+            font-style: italic;
+        }
+
+        /* Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .nav-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: var(--primary-green);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button:hover {
+            background-color: var(--dark-green);
+            transform: translateY(-2px);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background-color: var(--accent-green);
+        }
+
+        .instruction-hint {
+            margin-top: 20px;
+            font-size: 0.85rem;
+            color: #95a5a6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 480px) {
+            .flashcard-container { height: 300px; }
+            h1 { font-size: 1.4rem; }
+            .vocab-text { font-size: 1.5rem !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Russisch-Lernkartei</h1>
+    <div class="progress" id="progress">1 / 75</div>
+
+    <div class="flashcard-container" id="cardContainer">
+        <div class="flashcard" id="card">
+            <div class="card-face front">
+                <p class="vocab-text" id="frontText">Russisch</p>
+                <p class="note" id="frontNote"></p>
+            </div>
+            <div class="card-face back">
+                <p class="vocab-text" id="backText">Deutsch</p>
+                <p class="note" id="backNote"></p>
+            </div>
+        </div>
+    </div>
+
+    <div class="nav-buttons">
+        <button id="prevBtn">← Vorherige</button>
+        <button id="nextBtn">Nächste →</button>
+    </div>
+
+    <div class="controls">
+        <button class="btn-secondary" id="shuffleBtn">🔀 Mischen</button>
+        <button class="btn-secondary" id="homeBtn">🏠 An den Anfang</button>
+    </div>
+
+    <div class="instruction-hint">
+        Tipp: Nutze Pfeiltasten (← →), Leertaste/Enter zum Umdrehen oder Pos1 für den Anfang.
+    </div>
+</div>
+
+<script>
+    const vocabularyData = [
+        {f: "свой / своя́ / своё / свои́", b: "eigen-", bn: "(reflexives Possessivpronomen)"},
+        {f: "брать / взять", b: "nehmen"},
+        {f: "покупа́ть / купи́ть", b: "kaufen"},
+        {f: "иска́ть / поиска́ть", b: "suchen"},
+        {f: "находи́ть / найти́", b: "finden"},
+        {f: "забыва́ть / забы́ть", b: "vergessen"},
+        {f: "по́мнить / запо́мнить", b: "sich erinnern / merken"},
+        {f: "люби́ть / полюби́ть", b: "lieben"},
+        {f: "знать / узна́ть", b: "wissen / kennen"},
+        {f: "чита́ть / прочита́ть", b: "lesen"},
+        {f: "писа́ть / написа́ть", b: "schreiben"},
+        {f: "ви́деть / уви́деть", b: "sehen"},
+        {f: "смотре́ть / посмотре́ть", b: "schauen / ansehen"},
+        {f: "слы́шать / услы́шать", b: "hören"},
+        {f: "слу́шать / послу́шать", b: "zuhören"},
+        {f: "ждать / подожда́ть", b: "warten"},
+        {f: "чи́стить / почи́стить", b: "putzen / reinigen"},
+        {f: "мыть / помы́ть", b: "waschen"},
+        {f: "пить / вы́пить", b: "trinken"},
+        {f: "есть / съесть", b: "essen"},
+        {f: "стро́ить / постро́ить", b: "bauen"},
+        {f: "чини́ть / почини́ть", b: "reparieren"},
+        {f: "открыва́ть / откры́ть", b: "öffnen"},
+        {f: "закрыва́ть / закры́ть", b: "schließen"},
+        {f: "надева́ть / наде́ть", b: "(etwas) anziehen"},
+        {f: "горди́ться / возгорди́ться", b: "stolz sein"},
+        {f: "мечта́ть / помечта́ть", b: "träumen"},
+        {f: "помога́ть / помо́чь", b: "helfen"},
+        {f: "звони́ть / позвони́ть", b: "anrufen / telefonieren"},
+        {f: "боя́ться / побоя́ться", b: "Angst haben"},
+        {f: "ду́мать / поду́мать", b: "denken"},
+        {f: "говори́ть / сказа́ть", b: "sprechen / sagen"},
+        {f: "чемода́н", b: "Koffer"},
+        {f: "бага́ж", b: "Gepäck"},
+        {f: "биле́т", b: "Ticket"},
+        {f: "па́спорт", b: "Reisepass"},
+        {f: "ключ", b: "Schlüssel"},
+        {f: "кошелёк", b: "Portemonnaie"},
+        {f: "рюкза́к", b: "Rucksack"},
+        {f: "су́мка", b: "Tasche"},
+        {f: "слова́рь", b: "Wörterbuch"},
+        {f: "кни́га", b: "Buch"},
+        {f: "тетра́дь", b: "Heft"},
+        {f: "письмо́", b: "Brief"},
+        {f: "компью́тер", b: "Computer"},
+        {f: "ноутбу́к", b: "Laptop"},
+        {f: "оши́бка", b: "Fehler"},
+        {f: "результа́т", b: "Ergebnis"},
+        {f: "успе́х", b: "Erfolg"},
+        {f: "план", b: "Plan"},
+        {f: "статья́", b: "Artikel"},
+        {f: "де́ло", b: "Sache / Angelegenheit / Geschäft"},
+        {f: "рабо́та", b: "Arbeit"},
+        {f: "го́род", b: "Stadt"},
+        {f: "дом", b: "Haus"},
+        {f: "да́ча", b: "Datsche / Ferienhaus"},
+        {f: "окно́", b: "Fenster"},
+        {f: "чай", b: "Tee"},
+        {f: "молоко́", b: "Milch"},
+        {f: "суп", b: "Suppe"},
+        {f: "о́бувь", b: "Schuhe / Schuhwerk"},
+        {f: "очки́", b: "Brille"},
+        {f: "ма́ма", b: "Mutter"},
+        {f: "па́па", b: "Vater"},
+        {f: "роди́тели", b: "Eltern"},
+        {f: "сын", b: "Sohn"},
+        {f: "дочь", b: "Tochter"},
+        {f: "брат", b: "Bruder"},
+        {f: "сестра́", b: "Schwester"},
+        {f: "друг", b: "Freund"},
+        {f: "подру́га", b: "Freundin"},
+        {f: "соба́ка", b: "Hund"},
+        {f: "пёс", b: "Hund", bn: "(Rüde)"},
+        {f: "вещь", b: "Sache / Ding"},
+        {f: "и́мя", b: "Name"}
+    ];
+
+    let currentDeck = [...vocabularyData];
+    let currentIndex = 0;
+
+    const card = document.getElementById('card');
+    const frontText = document.getElementById('frontText');
+    const backText = document.getElementById('backText');
+    const frontNote = document.getElementById('frontNote');
+    const backNote = document.getElementById('backNote');
+    const progress = document.getElementById('progress');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const shuffleBtn = document.getElementById('shuffleBtn');
+    const homeBtn = document.getElementById('homeBtn');
+
+    function updateCard() {
+        const item = currentDeck[currentIndex];
+        
+        // Reset card flip
+        card.classList.remove('flipped');
+        
+        // Set texts
+        frontText.textContent = item.f;
+        backText.textContent = item.b;
+        frontNote.textContent = item.fn || "";
+        backNote.textContent = item.bn || "";
+
+        // Dynamic font size
+        adjustFontSize(frontText, item.f);
+        adjustFontSize(backText, item.b);
+
+        // Update progress and buttons
+        progress.textContent = `${currentIndex + 1} / ${currentDeck.length}`;
+        prevBtn.disabled = currentIndex === 0;
+        nextBtn.disabled = currentIndex === currentDeck.length - 1;
+    }
+
+    function adjustFontSize(element, text) {
+        if (text.length > 30) {
+            element.style.fontSize = "1.2rem";
+        } else if (text.length > 20) {
+            element.style.fontSize = "1.5rem";
+        } else {
+            element.style.fontSize = "2rem";
+        }
+    }
+
+    function flipCard() {
+        card.classList.toggle('flipped');
+    }
+
+    function nextCard() {
+        if (currentIndex < currentDeck.length - 1) {
+            currentIndex++;
+            updateCard();
+        }
+    }
+
+    function prevCard() {
+        if (currentIndex > 0) {
+            currentIndex--;
+            updateCard();
+        }
+    }
+
+    function goHome() {
+        currentIndex = 0;
+        updateCard();
+    }
+
+    function shuffleDeck() {
+        for (let i = currentDeck.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [currentDeck[i], currentDeck[j]] = [currentDeck[j], currentDeck[i]];
+        }
+        goHome();
+    }
+
+    // Event Listeners
+    document.getElementById('cardContainer').addEventListener('click', flipCard);
+    nextBtn.addEventListener('click', nextCard);
+    prevBtn.addEventListener('click', prevCard);
+    shuffleBtn.addEventListener('click', shuffleDeck);
+    homeBtn.addEventListener('click', goHome);
+
+    // Keyboard Controls
+    document.addEventListener('keydown', (e) => {
+        switch(e.key) {
+            case " ":
+            case "Enter":
+                e.preventDefault();
+                flipCard();
+                break;
+            case "ArrowRight":
+                nextCard();
+                break;
+            case "ArrowLeft":
+                prevCard();
+                break;
+            case "Home":
+                goHome();
+                break;
+        }
+    });
+
+    // Init
+    updateCard();
+</script>
+
+</body>
+</html>
