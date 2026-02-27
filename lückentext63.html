@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktives Training: Das Pronomen СВОЙ</title>
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        h1 { text-align: center; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+        
+        .rules {
+            background: #e8f4fd;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent);
+        }
+
+        .task-card {
+            border: 1px solid #e1e8ed;
+            padding: 20px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            background: #fff;
+            transition: transform 0.2s;
+        }
+
+        .task-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+
+        .task-header { font-weight: bold; margin-bottom: 15px; color: var(--accent); display: block; }
+
+        /* Status-Farben */
+        .correct { background-color: #d4edda !important; border: 2px solid var(--success) !important; color: #155724 !important; }
+        .incorrect { background-color: #f8d7da !important; border: 2px solid var(--error) !important; color: #721c24 !important; }
+
+        .explanation-text {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 5px;
+            font-size: 0.9em;
+            color: #856404;
+        }
+
+        /* Interaktive Elemente */
+        select { padding: 8px; border-radius: 5px; border: 1px solid #ccc; font-size: 1em; outline: none; }
+        
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; flex-wrap: wrap; }
+        
+        button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.3s;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-sol { background: var(--accent); color: white; }
+        .chip { background: #f8f9fa; border: 1px solid #dee2e6; color: var(--primary); margin: 2px; }
+        .chip:hover { background: #e2e6ea; }
+
+        /* Drag & Drop */
+        .drag-pool { display: flex; gap: 10px; margin-bottom: 15px; padding: 10px; background: #f1f3f5; border-radius: 8px; flex-wrap: wrap; }
+        .draggable { padding: 6px 12px; background: var(--accent); color: white; border-radius: 4px; cursor: grab; }
+        .drop-zone { display: inline-block; min-width: 90px; height: 28px; border-bottom: 2px dashed var(--accent); vertical-align: middle; text-align: center; margin: 0 5px; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .btn-group button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Russisch Übung: Das Wort СВОЙ</h1>
+    
+    <div class="rules">
+        <strong>Kurz erklärt:</strong><br>
+        • <strong>Свой</strong> bezieht sich immer auf das <strong>Subjekt</strong> (Ich, du, er...).<br>
+        • Es bedeutet „sein/ihr eigener“.<br>
+        • In der 3. Person verhindert es Missverständnisse (Eigene Sache vs. Sache einer anderen Person).
+    </div>
+
+    <!-- Aufgabe 1 -->
+    <div class="task-card" id="task1" data-ans="свою" data-expl="Akkusativ, weiblich (книгу). Bezieht sich auf 'Она'.">
+        <span class="task-header">1. Dropdown: Die richtige Endung</span>
+        <p>Она читает <select onchange="checkSelect(this, 'свою')">
+            <option value="">-- wählen --</option>
+            <option value="свой">свой</option>
+            <option value="свою">свою</option>
+            <option value="своё">своё</option>
+        </select> книгу.</p>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task1')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task1')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 2 -->
+    <div class="task-card" id="task2" data-ans="его" data-expl="'ЕГО' bedeutet hier 'dessen'. Der Koffer gehört Boris, nicht dem Subjekt Ivan.">
+        <span class="task-header">2. Logik: Wessen Koffer?</span>
+        <p>Иван (Subjekt) взял чемодан Бориса. Иван взял ... чемодан.</p>
+        <label><input type="radio" name="q2" value="свой" onchange="checkRadio(this, 'его')"> свой</label> &nbsp;
+        <label><input type="radio" name="q2" value="его" onchange="checkRadio(this, 'его')"> его</label>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task2')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task2')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 3 -->
+    <div class="task-card" id="task3" data-ans="свои" data-expl="Plural-Form (Akkusativ), da 'вещи' (Sachen) im Plural steht.">
+        <span class="task-header">3. Auswahl: Plural</span>
+        <p>Вы забыли ... вещи.</p>
+        <button class="chip" onclick="checkChip(this, 'свои', 'task3')">свой</button>
+        <button class="chip" onclick="checkChip(this, 'свои', 'task3')">свои</button>
+        <button class="chip" onclick="checkChip(this, 'свои', 'task3')">свою</button>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task3')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task3')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 4 -->
+    <div class="task-card" id="task4" data-ans="своём" data-expl="Präpositiv, männlich (городе). Nach der Präposition 'в'.">
+        <span class="task-header">4. Fall-Check: Präpositiv</span>
+        <p>Я живу в ... городе. <select onchange="checkSelect(this, 'своём')">
+            <option value="">-- wählen --</option>
+            <option value="свой">свой</option>
+            <option value="своём">своём</option>
+            <option value="своего">своего</option>
+        </select></p>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task4')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task4')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 5 -->
+    <div class="task-card" id="task5" data-ans="своё" data-expl="'Имя' (Name) ist sächlich im Russischen. Daher 'своё'.">
+        <span class="task-header">5. Geschlecht: Sächlich</span>
+        <p>Ты помнишь ... имя?</p>
+        <button class="chip" onclick="checkChip(this, 'своё', 'task5')">свой</button>
+        <button class="chip" onclick="checkChip(this, 'своё', 'task5')">своё</button>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task5')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task5')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 6 -->
+    <div class="task-card" id="task6">
+        <span class="task-header">6. Drag & Drop: Satzbau</span>
+        <div class="drag-pool">
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="s1">любит</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="s2">Анна</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="s3">свою</div>
+            <div class="draggable" draggable="true" ondragstart="drag(event)" id="s4">семью</div>
+        </div>
+        <p>
+            <span class="drop-zone" ondrop="drop(event, 'Анна')" ondragover="allowDrop(event)"></span>
+            <span class="drop-zone" ondrop="drop(event, 'любит')" ondragover="allowDrop(event)"></span>
+            <span class="drop-zone" ondrop="drop(event, 'свою')" ondragover="allowDrop(event)"></span>
+            <span class="drop-zone" ondrop="drop(event, 'семью')" ondragover="allowDrop(event)"></span>
+        </p>
+        <div class="explanation-text" id="expl6">Satzbau: Subjekt (Анна) + Verb (любит) + Objekt (свою семью).</div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetDrag('task6')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showDragSol('task6')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 7 -->
+    <div class="task-card" id="task7" data-ans="своим" data-expl="Instrumental (Творительный падеж) nach dem Verb 'доволен'.">
+        <span class="task-header">7. Verben & Fälle</span>
+        <p>Он доволен (er ist zufrieden) ... результатом.</p>
+        <button class="chip" onclick="checkChip(this, 'своим', 'task7')">свой</button>
+        <button class="chip" onclick="checkChip(this, 'своим', 'task7')">своим</button>
+        <button class="chip" onclick="checkChip(this, 'своим', 'task7')">своего</button>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task7')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task7')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 8 -->
+    <div class="task-card" id="task8" data-ans="false" data-expl="'Свой' kann nie im Nominativ als Subjekt stehen. Richtig: Моя сестра...">
+        <span class="task-header">8. Richtig oder Falsch?</span>
+        <p>"Своя сестра живёт здесь."</p>
+        <button class="chip" onclick="checkChip(this, 'false', 'task8')">Richtig</button>
+        <button class="chip" onclick="checkChip(this, 'false', 'task8')">Falsch</button>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task8')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task8')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 9 -->
+    <div class="task-card" id="task9" data-ans="своей" data-expl="Präpositiv, weiblich. Da das Subjekt 'Она' ist, nutzt man 'своей'.">
+        <span class="task-header">9. Kontext: Über wen spricht sie?</span>
+        <p>Она говорит о ... маме.</p>
+        <button class="chip" onclick="checkChip(this, 'своей', 'task9')">своей</button>
+        <button class="chip" onclick="checkChip(this, 'своей', 'task9')">её</button>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task9')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task9')">Lösung</button>
+        </div>
+    </div>
+
+    <!-- Aufgabe 10 -->
+    <div class="task-card" id="task10" data-ans="своего" data-expl="Genitiv nach der Verneinung 'нет'.">
+        <span class="task-header">10. Verneinung (Genitiv)</span>
+        <p>У него нет ... ключа.</p>
+        <select onchange="checkSelect(this, 'своего')">
+            <option value="">-- wählen --</option>
+            <option value="свой">свой</option>
+            <option value="своего">своего</option>
+        </select>
+        <div class="explanation-text"></div>
+        <div class="btn-group">
+            <button class="btn-reset" onclick="resetTask('task10')">Zurücksetzen</button>
+            <button class="btn-sol" onclick="showSolution('task10')">Lösung</button>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Sofort-Feedback für Dropdowns
+    function checkSelect(el, correct) {
+        el.className = (el.value === correct) ? 'correct' : 'incorrect';
+    }
+
+    // Sofort-Feedback für Radios
+    function checkRadio(el, correct) {
+        const parent = el.closest('.task-card');
+        parent.querySelectorAll('label').forEach(l => l.className = '');
+        el.parentElement.className = (el.value === correct) ? 'correct' : 'incorrect';
+    }
+
+    // Sofort-Feedback für Chips
+    function checkChip(btn, correct, taskId) {
+        const parent = document.getElementById(taskId);
+        parent.querySelectorAll('.chip').forEach(c => c.className = 'chip');
+        if (btn.innerText.toLowerCase() === correct.toLowerCase() || (correct === 'false' && btn.innerText === 'Falsch')) {
+            btn.classList.add('correct');
+        } else {
+            btn.classList.add('incorrect');
+        }
+    }
+
+    // Drag & Drop Funktionen
+    function allowDrop(ev) { ev.preventDefault(); }
+    function drag(ev) { ev.dataTransfer.setData("text", ev.target.innerText); }
+    function drop(ev, correct) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+        ev.target.innerText = data;
+        ev.target.className = 'drop-zone ' + (data === correct ? 'correct' : 'incorrect');
+    }
+
+    // Lösung anzeigen Logik
+    function showSolution(id) {
+        const card = document.getElementById(id);
+        const ans = card.getAttribute('data-ans');
+        const expl = card.getAttribute('data-expl');
+        
+        // Anzeige Erklärung
+        const explDiv = card.querySelector('.explanation-text');
+        explDiv.innerText = "Lösung: " + (ans === 'false' ? 'Falsch' : ans) + " | " + expl;
+        explDiv.style.display = 'block';
+
+        // Felder füllen
+        const sel = card.querySelector('select');
+        if(sel) { sel.value = ans; sel.className = 'correct'; }
+
+        const chips = card.querySelectorAll('.chip');
+        chips.forEach(c => {
+            if(c.innerText.toLowerCase() === ans.toLowerCase() || (ans === 'false' && c.innerText === 'Falsch')) 
+                c.className = 'chip correct';
+        });
+
+        const rads = card.querySelectorAll('input[type="radio"]');
+        rads.forEach(r => {
+            if(r.value === ans) { r.checked = true; r.parentElement.className = 'correct'; }
+        });
+    }
+
+    function showDragSol(id) {
+        const card = document.getElementById(id);
+        const zones = card.querySelectorAll('.drop-zone');
+        const sol = ["Анна", "любит", "свою", "семью"];
+        zones.forEach((z, i) => {
+            z.innerText = sol[i];
+            z.className = 'drop-zone correct';
+        });
+        card.querySelector('.explanation-text').style.display = 'block';
+    }
+
+    // Zurücksetzen
+    function resetTask(id) {
+        const card = document.getElementById(id);
+        const sel = card.querySelector('select');
+        if(sel) { sel.value = ""; sel.className = ""; }
+        const rads = card.querySelectorAll('input');
+        rads.forEach(r => { r.checked = false; r.parentElement.className = ""; });
+        card.querySelectorAll('.chip').forEach(c => c.className = 'chip');
+        card.querySelector('.explanation-text').style.display = 'none';
+    }
+
+    function resetDrag(id) {
+        const card = document.getElementById(id);
+        card.querySelectorAll('.drop-zone').forEach(z => { z.innerText = ""; z.className = "drop-zone"; });
+        card.querySelector('.explanation-text').style.display = 'none';
+    }
+</script>
+
+</body>
+</html>
