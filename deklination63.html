@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interaktive Tabelle: Deklination СВОЙ</title>
+    <!-- Polyfill für Drag & Drop auf Touch-Geräten -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        /* Keine Kursivschrift */
+        * {
+            font-style: normal !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.5;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: #eef7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 6px solid var(--accent);
+            font-size: 0.95rem;
+        }
+
+        /* Wort-Pool */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            padding: 15px;
+            background: #f1f3f5;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .draggable-word {
+            background: var(--primary);
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: grab;
+            user-select: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+        .draggable-word:active {
+            cursor: grabbing;
+        }
+
+        /* Tabellen-Styling */
+        .table-wrapper {
+            overflow-x: auto;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 700px; /* Garantiert Lesbarkeit auf Mobilgeräten */
+            background: white;
+        }
+
+        th, td {
+            border: 1px solid #dee2e6;
+            padding: 12px 8px;
+            text-align: center;
+        }
+
+        th {
+            background-color: #f8f9fa;
+            font-weight: bold;
+            color: var(--primary);
+        }
+
+        .case-label {
+            font-weight: bold;
+            background-color: #f8f9fa;
+            text-align: left;
+            width: 120px;
+        }
+
+        /* Drop-Zonen */
+        .drop-zone {
+            width: 100%;
+            min-height: 35px;
+            border: 1px dashed var(--accent);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: transparent; /* Versteckt Text, wenn leer */
+        }
+
+        .drop-zone.filled {
+            color: var(--primary);
+            border-style: solid;
+            font-weight: 600;
+        }
+
+        /* Feedback-Farben */
+        .correct { background-color: var(--success) !important; color: white !important; border-color: var(--success) !important; }
+        .incorrect { background-color: var(--error) !important; color: white !important; border-color: var(--error) !important; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: opacity 0.3s;
+        }
+
+        .btn-reset { background-color: #95a5a6; color: white; }
+        .btn-solution { background-color: var(--accent); color: white; }
+        button:hover { opacity: 0.9; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            th, td { padding: 8px 4px; font-size: 0.85rem; }
+            .drop-zone { min-height: 30px; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Tabelle: Deklination von СВОЙ</h1>
+    
+    <div class="instructions">
+        <strong>Anleitung:</strong> Vervollständige die Tabelle. Ziehe die richtigen Formen von <strong>СВОЙ</strong> aus dem grauen Feld in die Lücken. 
+        <br><br>
+        Hinweis: Das Feedback (Grün/Rot) erscheint sofort beim Loslassen.
+    </div>
+
+    <!-- Wort-Pool -->
+    <div class="word-pool" id="pool">
+        <!-- Einzigartige Formen zum Ziehen -->
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">свой</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своего</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своему</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своим</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своём</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своя</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">свою</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своей</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своё</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">свои</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своих</div>
+        <div class="draggable-word" draggable="true" ondragstart="drag(event)">своими</div>
+    </div>
+
+    <!-- Tabelle -->
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Kasus (Fall)</th>
+                    <th>Maskulin</th>
+                    <th>Feminin</th>
+                    <th>Neutrum</th>
+                    <th>Plural</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td class="case-label">Nominativ</td>
+                    <td>свой</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своя')" ondragover="allowDrop(event)">?</div></td>
+                    <td>своё</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'свои')" ondragover="allowDrop(event)">?</div></td>
+                </tr>
+                <tr>
+                    <td class="case-label">Genitiv</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своего')" ondragover="allowDrop(event)">?</div></td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своей')" ondragover="allowDrop(event)">?</div></td>
+                    <td>своего</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своих')" ondragover="allowDrop(event)">?</div></td>
+                </tr>
+                <tr>
+                    <td class="case-label">Dativ</td>
+                    <td>своему</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своей')" ondragover="allowDrop(event)">?</div></td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своему')" ondragover="allowDrop(event)">?</div></td>
+                    <td>своим</td>
+                </tr>
+                <tr>
+                    <td class="case-label">Akkusativ</td>
+                    <td>свой / своего</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'свою')" ondragover="allowDrop(event)">?</div></td>
+                    <td>своё</td>
+                    <td>свои / своих</td>
+                </tr>
+                <tr>
+                    <td class="case-label">Instrumental</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своим')" ondragover="allowDrop(event)">?</div></td>
+                    <td>своей</td>
+                    <td>своим</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своими')" ondragover="allowDrop(event)">?</div></td>
+                </tr>
+                <tr>
+                    <td class="case-label">Präpositiv</td>
+                    <td>своём</td>
+                    <td>своей</td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своём')" ondragover="allowDrop(event)">?</div></td>
+                    <td><div class="drop-zone" ondrop="drop(event, 'своих')" ondragover="allowDrop(event)">?</div></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="resetTable()">Tabelle zurücksetzen</button>
+        <button class="btn-solution" onclick="showSolution()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.innerText);
+    }
+
+    function drop(ev, correctValue) {
+        ev.preventDefault();
+        const draggedData = ev.dataTransfer.getData("text");
+        const dropZone = ev.target;
+
+        if (!dropZone.classList.contains('drop-zone')) return;
+
+        dropZone.innerText = draggedData;
+        dropZone.classList.add('filled');
+        
+        // Sofort-Feedback
+        dropZone.classList.remove('correct', 'incorrect');
+        if (draggedData === correctValue) {
+            dropZone.classList.add('correct');
+        } else {
+            dropZone.classList.add('incorrect');
+        }
+    }
+
+    function resetTable() {
+        const zones = document.querySelectorAll('.drop-zone');
+        zones.forEach(zone => {
+            zone.innerText = "?";
+            zone.classList.remove('filled', 'correct', 'incorrect');
+        });
+    }
+
+    function showSolution() {
+        const zones = document.querySelectorAll('.drop-zone');
+        zones.forEach(zone => {
+            // Wir lesen das korrekte Attribut aus dem ondrop-Event-String (Simpler Hack für diese Struktur)
+            const attr = zone.getAttribute('ondrop');
+            const match = attr.match(/'([^']+)'/);
+            if (match) {
+                zone.innerText = match[1];
+                zone.classList.add('filled', 'correct');
+                zone.classList.remove('incorrect');
+            }
+        });
+    }
+</script>
+
+</body>
+</html>
