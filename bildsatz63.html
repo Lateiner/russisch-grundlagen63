@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visuelles Matching: СВОЙ vs. ЕГО/ЕЁ/ИХ</title>
+    
+    <!-- Polyfill für Drag & Drop auf Smartphones/Tablets -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --success-color: #27ae60;
+            --error-color: #e74c3c;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card-bg);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--accent-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: #eef7ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 6px solid var(--accent-color);
+            font-size: 0.95rem;
+        }
+
+        .task-card {
+            border: 1px solid #e1e8ed;
+            padding: 20px;
+            margin-bottom: 40px;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .task-card h3 {
+            margin-top: 0;
+            color: var(--accent-color);
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+        }
+
+        /* Satz-Bank (Auswahlbereich) */
+        .sentence-bank {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            justify-content: center;
+            padding: 15px;
+            background: #f1f3f5;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            min-height: 60px;
+        }
+
+        .draggable-sentence {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-size: 0.95rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            transition: transform 0.2s;
+        }
+
+        .draggable-sentence:active {
+            cursor: grabbing;
+            transform: scale(0.95);
+        }
+
+        /* Szenen-Gitter */
+        .visual-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .scene-box {
+            background: #fdfdfd;
+            border: 2px solid #eee;
+            border-radius: 10px;
+            padding: 15px;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 220px;
+        }
+
+        .scene-icon {
+            font-size: 50px;
+            margin-bottom: 10px;
+        }
+
+        .scene-desc {
+            font-weight: bold;
+            font-size: 0.85rem;
+            color: #555;
+            margin-bottom: 15px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Ziel-Felder */
+        .drop-zone {
+            width: 100%;
+            min-height: 50px;
+            border: 2px dashed #bdc3c7;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            background: #fff;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-weight: bold;
+            color: #95a5a6;
+        }
+
+        .drop-zone.filled {
+            color: var(--primary-color);
+            border-style: solid;
+        }
+
+        /* Feedback Farben */
+        .drop-zone.correct {
+            background-color: var(--success-color) !important;
+            color: white !important;
+            border-color: var(--success-color);
+        }
+
+        .drop-zone.incorrect {
+            background-color: var(--error-color) !important;
+            color: white !important;
+            border-color: var(--error-color);
+        }
+
+        .explanation {
+            display: none;
+            margin-top: 15px;
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-reset {
+            background: #95a5a6;
+            color: white;
+        }
+
+        .btn-sol {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        /* Responsive Anpassungen */
+        @media (max-width: 650px) {
+            .visual-grid {
+                grid-template-columns: 1fr;
+            }
+            .container {
+                padding: 15px;
+            }
+            .scene-box {
+                min-height: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Visuelles Matching: СВОЙ vs. ЕГО/ЕЁ/ИХ</h1>
+    
+    <div class="instructions">
+        <strong>Anleitung:</strong> Ziehe den passenden russischen Satz in das Feld unter der Szene.
+        <br>
+        ✅ <strong>СВОЙ</strong> = bezieht sich auf das Subjekt (eigener Besitz).
+        <br>
+        ❌ <strong>ЕГО / ЕЁ / ИХ</strong> = bezieht sich auf jemand anderen (fremder Besitz).
+        <br><br>
+        <em>Tipp: Feedback erfolgt sofort nach dem Loslassen!</em>
+    </div>
+
+    <div id="game-root"></div>
+</div>
+
+<script>
+    // Daten für die 6 Szenarien
+    const scenarios = [
+        {
+            id: 1,
+            title: "Szenario 1: Viktor & Hund",
+            sentences: [
+                { id: "1-own", text: "Виктор гуляет со своим псом.", type: "own" },
+                { id: "1-other", text: "Виктор гуляет с его псом.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👦🐕", desc: "SZENE A: Viktor geht mit seinem eigenen Hund spazieren.", correctId: "1-own" },
+                { icon: "👦 ... 🐕 (👤)", desc: "SZENE B: Viktor führt den Hund seines Nachbarn aus.", correctId: "1-other" }
+            ],
+            expl: "Erklärung: 'Со своим' bezieht sich direkt auf das Subjekt Viktor. 'С его' bedeutet, der Hund gehört einem anderen Mann."
+        },
+        {
+            id: 2,
+            title: "Szenario 2: Anna & Auto",
+            sentences: [
+                { id: "2-own", text: "Анна моет свою машину.", type: "own" },
+                { id: "2-other", text: "Анна моет её машину.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👩🚗🧽", desc: "SZENE C: Anna wäscht ihr eigenes Auto.", correctId: "2-own" },
+                { icon: "👩 ... 🚗 (👱‍♀️)", desc: "SZENE D: Anna wäscht das Auto ihrer Freundin.", correctId: "2-other" }
+            ],
+            expl: "Erklärung: 'Свую' ist reflexiv und gehört zum Subjekt Anna. 'Её' bezieht sich auf eine andere Frau."
+        },
+        {
+            id: 3,
+            title: "Szenario 3: Die Freunde & Haus",
+            sentences: [
+                { id: "3-own", text: "Друзья строят свой дом.", type: "own" },
+                { id: "3-other", text: "Друзья строят их дом.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👥🏠🏗️", desc: "SZENE E: Die Freunde bauen ihr gemeinsames Haus.", correctId: "3-own" },
+                { icon: "👥 ... 🏠 (🏘️)", desc: "SZENE F: Die Freunde arbeiten an einem Haus für fremde Kunden.", correctId: "3-other" }
+            ],
+            expl: "Erklärung: 'Свой' zeigt den Besitz der handelnden Gruppe an. 'Их' zeigt den Besitz von 'ihnen' (anderen Leuten) an."
+        },
+        {
+            id: 4,
+            title: "Szenario 4: Student & Laptop",
+            sentences: [
+                { id: "4-own", text: "Студент открыл свой ноутбук.", type: "own" },
+                { id: "4-other", text: "Студент открыл его ноутбук.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👨‍🎓💻", desc: "SZENE G: Der Student nutzt seinen eigenen Laptop.", correctId: "4-own" },
+                { icon: "👨‍🎓 ... 💻 (👨‍🏫)", desc: "SZENE H: Der Student nutzt den Laptop des Professors.", correctId: "4-other" }
+            ],
+            expl: "Erklärung: 'Свой' geht zurück zum Studenten. 'Его' zeigt, dass der Laptop dem Professor gehört."
+        },
+        {
+            id: 5,
+            title: "Szenario 5: Maria & Tochter",
+            sentences: [
+                { id: "5-own", text: "Мария любит свою дочь.", type: "own" },
+                { id: "5-other", text: "Мария любит её дочь.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👩‍👧❤️", desc: "SZENE I: Maria liebt ihre leibliche Tochter.", correctId: "5-own" },
+                { icon: "👩 ... 👧 (👩‍🦰)", desc: "SZENE J: Maria liebt die Tochter einer anderen Frau.", correctId: "5-other" }
+            ],
+            expl: "Erklärung: 'Свою' ist die eigene Tochter des Subjekts. 'Её' ist die Tochter einer anderen Person."
+        },
+        {
+            id: 6,
+            title: "Szenario 6: Ivan & Schlüssel",
+            sentences: [
+                { id: "6-own", text: "Иван ищет свой ключ.", type: "own" },
+                { id: "6-other", text: "Иван ищет его ключ.", type: "other" }
+            ],
+            scenes: [
+                { icon: "👦🔑🔎", desc: "SZENE K: Ivan sucht seinen eigenen Schlüssel.", correctId: "6-own" },
+                { icon: "👦 ... 🔑 (🛌)", desc: "SZENE L: Ivan sucht den Schlüssel seines Mitbewohners.", correctId: "6-other" }
+            ],
+            expl: "Erklärung: 'Свой' ist Ivans Schlüssel. 'Его' ist der Schlüssel einer anderen männlichen Person."
+        }
+    ];
+
+    // Hilfsfunktion zum Mischen
+    function shuffleArray(array) {
+        let newArr = [...array];
+        for (let i = newArr.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [newArr[i], newArr[j]] = [newArr[j], newArr[i]];
+        }
+        return newArr;
+    }
+
+    // Spiel rendern
+    function renderGame() {
+        const root = document.getElementById('game-root');
+        root.innerHTML = '';
+
+        scenarios.forEach(s => {
+            const shuffledSentences = shuffleArray(s.sentences);
+            
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.id = `task-${s.id}`;
+
+            card.innerHTML = `
+                <h3>${s.title}</h3>
+                <div class="sentence-bank" id="bank-${s.id}">
+                    ${shuffledSentences.map(sent => `
+                        <div class="draggable-sentence" 
+                             draggable="true" 
+                             ondragstart="drag(event)" 
+                             id="${sent.id}">${sent.text}</div>
+                    `).join('')}
+                </div>
+                <div class="visual-grid">
+                    ${s.scenes.map((scene, idx) => `
+                        <div class="scene-box">
+                            <div class="scene-icon">${scene.icon}</div>
+                            <div class="scene-desc">${scene.desc}</div>
+                            <div class="drop-zone" 
+                                 id="zone-${s.id}-${idx}" 
+                                 ondrop="drop(event, '${scene.correctId}')" 
+                                 ondragover="allowDrop(event)">Hierher ziehen</div>
+                        </div>
+                    `).join('')}
+                </div>
+                <div class="explanation" id="expl-${s.id}">${s.expl}</div>
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="resetTask(${s.id})">Zurücksetzen und mischen</button>
+                    <button class="btn-sol" onclick="showSolution(${s.id})">Lösung anzeigen</button>
+                </div>
+            `;
+            root.appendChild(card);
+        });
+    }
+
+    // Drag & Drop Funktionen
+    function allowDrop(ev) {
+        ev.preventDefault();
+    }
+
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev, correctId) {
+        ev.preventDefault();
+        const draggedId = ev.dataTransfer.getData("text");
+        const draggedElement = document.getElementById(draggedId);
+        
+        // Validierung: Gehört der Satz zu dieser Aufgabe?
+        const currentTask = draggedId.split('-')[0];
+        const targetTask = correctId.split('-')[0];
+        if (currentTask !== targetTask) return;
+
+        let targetZone = ev.target;
+        // Falls auf den Text im Feld gedroppt wird, das Elternelement nehmen
+        while (targetZone && !targetZone.classList.contains('drop-zone')) {
+            targetZone = targetZone.parentNode;
+        }
+
+        if (targetZone) {
+            targetZone.innerText = draggedElement.innerText;
+            targetZone.classList.add('filled');
+            
+            // Sofort-Feedback
+            if (draggedId === correctId) {
+                targetZone.className = "drop-zone filled correct";
+            } else {
+                targetZone.className = "drop-zone filled incorrect";
+            }
+        }
+    }
+
+    // Einzelne Aufgabe zurücksetzen und neu mischen
+    function resetTask(taskId) {
+        const scenario = scenarios.find(s => s.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        
+        // Zonen leeren
+        const zones = card.querySelectorAll('.drop-zone');
+        zones.forEach(z => {
+            z.innerText = "Hierher ziehen";
+            z.className = "drop-zone";
+        });
+
+        // Bank neu mischen
+        const bank = card.querySelector('.sentence-bank');
+        const shuffled = shuffleArray(scenario.sentences);
+        bank.innerHTML = shuffled.map(sent => `
+            <div class="draggable-sentence" 
+                 draggable="true" 
+                 ondragstart="drag(event)" 
+                 id="${sent.id}">${sent.text}</div>
+        `).join('');
+
+        // Erklärung verstecken
+        document.getElementById(`expl-${taskId}`).style.display = 'none';
+    }
+
+    // Lösung für eine Aufgabe anzeigen
+    function showSolution(taskId) {
+        const scenario = scenarios.find(s => s.id === taskId);
+        const card = document.getElementById(`task-${taskId}`);
+        
+        scenario.scenes.forEach((scene, idx) => {
+            const zone = document.getElementById(`zone-${taskId}-${idx}`);
+            const correctSentence = scenario.sentences.find(sent => sent.id === scene.correctId);
+            zone.innerText = correctSentence.text;
+            zone.className = "drop-zone filled correct";
+        });
+
+        document.getElementById(`expl-${taskId}`).style.display = 'block';
+    }
+
+    // Initialisierung
+    renderGame();
+</script>
+
+</body>
+</html>
