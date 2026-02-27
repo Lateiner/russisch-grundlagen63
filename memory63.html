@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Memory: Subjekt & СВОЙ</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        /* Keine Kursivschrift im gesamten Dokument */
+        * {
+            font-style: normal !important;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            line-height: 1.6;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+
+        h1 {
+            text-align: center;
+            border-bottom: 3px solid var(--accent);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .instructions {
+            background: #eef7ff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 25px;
+            border-left: 6px solid var(--accent);
+            font-size: 0.95rem;
+        }
+
+        /* Spielfeld */
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            margin-bottom: 30px;
+            min-height: 400px;
+        }
+
+        .memory-card {
+            background: #fff;
+            border: 2px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            user-select: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .memory-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+
+        .selected {
+            border-color: var(--accent);
+            background-color: #ebf5ff;
+            transform: scale(1.02);
+        }
+
+        .incorrect {
+            background-color: var(--error) !important;
+            border-color: var(--error) !important;
+            color: white !important;
+        }
+
+        /* Normales Verschwinden im Spiel */
+        .matched-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Zustand nach Lösung anzeigen: Sichtbar bleiben */
+        .solved-visible {
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: none;
+            border-width: 3px;
+        }
+
+        .subject-card { border-left: 6px solid var(--accent); }
+        .fragment-card { border-left: 6px solid #95a5a6; }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+
+        button {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .btn-reset { background-color: #95a5a6; color: white; }
+        .btn-solution { background-color: var(--accent); color: white; }
+        button:hover { opacity: 0.9; }
+
+        @media (max-width: 600px) {
+            .game-board { grid-template-columns: 1fr 1fr; }
+            .memory-card { font-size: 0.85rem; padding: 10px; min-height: 70px; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Memory: Subjekt & СВОЙ</h1>
+    
+    <div class="instructions">
+        <strong>Anleitung:</strong> Finde die Paare aus <strong>Subjekt</strong> und passendem <strong>Satzfragment</strong>. 
+        <br><br>
+        1. Klicke zwei Karten nacheinander an. <br>
+        2. Richtige Paare <strong>verschwinden</strong> während des Spiels. <br>
+        3. <strong>Lösung anzeigen</strong> blendet alle Paare farbig ein, damit du sie vergleichen kannst.
+    </div>
+
+    <div class="game-board" id="game-board">
+        <!-- Karten werden per JS generiert -->
+    </div>
+
+    <div class="controls">
+        <button class="btn-reset" onclick="initGame()">Neues Spiel / Mischen</button>
+        <button class="btn-solution" onclick="showSolution()">Lösung anzeigen</button>
+    </div>
+</div>
+
+<script>
+    const pairs = [
+        { id: 1, sub: "Я", frag: "... читаю свою книгу." },
+        { id: 2, sub: "Ты", frag: "... любишь свою маму?" },
+        { id: 3, sub: "Он", frag: "... чистит свой компьютер." },
+        { id: 4, sub: "Она", frag: "... моет свою машину." },
+        { id: 5, sub: "Мы", frag: "... любим свою страну." },
+        { id: 6, sub: "Вы", frag: "... забыли свои ключи." },
+        { id: 7, sub: "Они", frag: "... строят свой дом." },
+        { id: 8, sub: "Иван", frag: "... потеряl свой паспорт." },
+        { id: 9, sub: "Марина", frag: "... ищет свою кошку." },
+        { id: 10, sub: "Студенты", frag: "... делают свои задания." }
+    ];
+
+    // 10 helle, gut unterscheidbare Farben
+    const pairColors = [
+        "#FFD1DC", "#E0BBE4", "#BFFCC6", "#D2E7FF", "#FFF5BA", 
+        "#FFABAB", "#AFCBFF", "#C5E1A5", "#FFCCBC", "#D4EFDF"
+    ];
+
+    let firstCard = null;
+    let lockBoard = false;
+    let matchesFound = 0;
+
+    function initGame() {
+        const board = document.getElementById('game-board');
+        board.innerHTML = '';
+        firstCard = null;
+        lockBoard = false;
+        matchesFound = 0;
+
+        let cards = [];
+        pairs.forEach(p => {
+            cards.push({ id: p.id, text: p.sub, type: 'subject' });
+            cards.push({ id: p.id, text: p.frag, type: 'fragment' });
+        });
+
+        // Mischen
+        cards.sort(() => Math.random() - 0.5);
+
+        cards.forEach(data => {
+            const card = document.createElement('div');
+            card.className = `memory-card ${data.type === 'subject' ? 'subject-card' : 'fragment-card'}`;
+            card.textContent = data.text;
+            card.dataset.pairId = data.id;
+            card.dataset.type = data.type;
+            card.onclick = () => handleCardClick(card);
+            board.appendChild(card);
+        });
+    }
+
+    function handleCardClick(card) {
+        if (lockBoard || card.classList.contains('matched-hidden') || card.classList.contains('solved-visible') || card === firstCard) return;
+
+        card.classList.add('selected');
+
+        if (!firstCard) {
+            firstCard = card;
+            return;
+        }
+
+        lockBoard = true;
+        const isMatch = firstCard.dataset.pairId === card.dataset.pairId && 
+                        firstCard.dataset.type !== card.dataset.type;
+
+        if (isMatch) {
+            matchesFound++;
+            setTimeout(() => {
+                firstCard.classList.add('matched-hidden');
+                card.classList.add('matched-hidden');
+                resetTurn();
+                if (matchesFound === pairs.length) {
+                    setTimeout(() => alert("Klasse! Alle Paare gefunden."), 300);
+                }
+            }, 500);
+        } else {
+            firstCard.classList.add('incorrect');
+            card.classList.add('incorrect');
+            setTimeout(() => {
+                firstCard.classList.remove('selected', 'incorrect');
+                card.classList.remove('selected', 'incorrect');
+                resetTurn();
+            }, 1000);
+        }
+    }
+
+    function resetTurn() {
+        firstCard = null;
+        lockBoard = false;
+    }
+
+    function showSolution() {
+        lockBoard = true;
+        const allCards = document.querySelectorAll('.memory-card');
+        
+        allCards.forEach(card => {
+            const pId = parseInt(card.dataset.pairId);
+            const color = pairColors[pId - 1];
+            
+            // Alles wieder sichtbar machen
+            card.classList.remove('matched-hidden', 'selected', 'incorrect');
+            card.classList.add('solved-visible');
+            
+            // Farblich markieren
+            card.style.backgroundColor = color;
+            card.style.borderColor = color;
+            card.style.color = "#2c3e50";
+        });
+    }
+
+    // Spielstart
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
