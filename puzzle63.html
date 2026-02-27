@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Satz-Puzzle: СВОЙ (10 Übungen)</title>
+    <!-- Polyfill für Drag & Drop auf Touch-Geräten -->
+    <script src="https://cdn.jsdelivr.net/npm/drag-drop-touch@1.3.1/DragDropTouch.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --success: #27ae60;
+            --error: #e74c3c;
+            --bg: #f4f7f6;
+            --card: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--primary);
+            margin: 0;
+            padding: 10px;
+        }
+
+        .container {
+            max-width: 850px;
+            margin: 0 auto;
+            background: var(--card);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        h1 { text-align: center; color: var(--primary); border-bottom: 3px solid var(--accent); padding-bottom: 10px; }
+
+        .intro {
+            background: #eef7ff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border-left: 5px solid var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .task-card {
+            border: 1px solid #e1e8ed;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 12px;
+            background: #fff;
+        }
+
+        .task-header {
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 15px;
+            display: block;
+        }
+
+        /* Wort-Pool (Grauer Bereich) */
+        .word-pool {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 60px;
+            padding: 15px;
+            background: #f1f3f5;
+            border: 2px dashed #ced4da;
+            border-radius: 8px;
+            margin-bottom: 15px;
+        }
+
+        /* Ziel-Bereich (Weißer Bereich) */
+        .drop-area {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            min-height: 60px;
+            padding: 15px;
+            background: #fff;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .word-chip {
+            background: var(--primary);
+            color: white;
+            padding: 10px 18px;
+            border-radius: 6px;
+            cursor: grab;
+            user-select: none;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .word-chip:active { cursor: grabbing; transform: scale(0.95); }
+
+        /* Feedback-Farben */
+        .correct { background-color: var(--success) !important; }
+        .incorrect { background-color: var(--error) !important; }
+
+        .explanation {
+            display: none;
+            margin-top: 10px;
+            padding: 12px;
+            background: #fff3cd;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #856404;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.3s;
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .btn-reset { background: #95a5a6; color: white; }
+        .btn-sol { background: var(--accent); color: white; }
+
+        @media (max-width: 600px) {
+            .container { padding: 15px; }
+            .word-chip { padding: 8px 12px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Satz-Puzzle: Russische Sätze mit СВОЙ</h1>
+    
+    <div class="intro">
+        <strong>Anleitung:</strong> Bringe die Wörter in die richtige Reihenfolge. Ziehe die Wörter aus dem grauen Feld in das weiße Feld. 
+        Feedback erfolgt sofort: <br>
+        ✅ <strong>Grün</strong> = Richtig platziert | ❌ <strong>Rot</strong> = Falsche Position.
+    </div>
+
+    <div id="puzzle-container"></div>
+</div>
+
+<script>
+    const sentences = [
+        { id: 1, words: ["Я", "люблю", "свою", "маму"], trans: "Ich liebe meine Mutter.", expl: "Akkusativ weiblich (свою маму). Свой bezieht sich auf 'Я'." },
+        { id: 2, words: ["Он", "читает", "свою", "книгу"], trans: "Er liest sein (eigenes) Buch.", expl: "Ohne 'свою' könnte es auch das Buch eines anderen Mannes sein." },
+        { id: 3, words: ["Мы", "знаем", "свою", "работу"], trans: "Wir kennen unsere Arbeit.", expl: "Bei 'Wir' wird im Russischen meist СВОЙ statt НАШ verwendet." },
+        { id: 4, words: ["Ты", "видишь", "свою", "ошибку"], trans: "Du siehst deinen Fehler.", expl: "Akkusativ weiblich: 'ошибка' wird zu 'ошибку', 'своя' zu 'свою'." },
+        { id: 5, words: ["Они", "строят", "свой", "дом"], trans: "Sie bauen ihr (eigenes) Haus.", expl: "Männliches Objekt (дом) im Akkusativ bleibt 'свой'." },
+        { id: 6, words: ["Вы", "забыли", "свои", "вещи"], trans: "Ihr habt eure Sachen vergessen.", expl: "Plural-Objekt (вещи) erfordert die Pluralform 'свои'." },
+        { id: 7, words: ["Отец", "любит", "своего", "сына"], trans: "Der Vater liebt seinen Sohn.", expl: "Belebtes männliches Objekt: Die Endung ist wie im Genitiv (своего)." },
+        { id: 8, words: ["Марина", "моет", "свою", "машину"], trans: "Marina wäscht ihr Auto.", expl: "Weibliches Objekt (машина) -> Akkusativ 'свою машину'." },
+        { id: 9, words: ["Студент", "пишет", "свою", "статью"], trans: "Der Student schreibt seinen Artikel.", expl: "Статья (Artikel) ist weiblich, daher 'свою'." },
+        { id: 10, words: ["Я", "жду", "своего", "друга"], trans: "Ich warte auf meinen Freund.", expl: "Männlich belebt (друг) -> Akkusativ 'своего друга'." }
+    ];
+
+    function shuffleArray(array) {
+        let shuffled = [...array];
+        for (let i = shuffled.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+        }
+        return shuffled;
+    }
+
+    function renderTasks() {
+        const container = document.getElementById('puzzle-container');
+        container.innerHTML = '';
+        
+        sentences.forEach(s => {
+            const shuffled = shuffleArray(s.words);
+            const card = document.createElement('div');
+            card.className = 'task-card';
+            card.id = `card-${s.id}`;
+            
+            card.innerHTML = `
+                <span class="task-header">Aufgabe ${s.id}: „${s.trans}“</span>
+                <div class="word-pool" id="pool-${s.id}" ondrop="drop(event)" ondragover="allowDrop(event)">
+                    ${shuffled.map((w, i) => `<div class="word-chip" draggable="true" ondragstart="drag(event)" id="w-${s.id}-${i}">${w}</div>`).join('')}
+                </div>
+                <div class="drop-area" id="target-${s.id}" ondrop="drop(event)" ondragover="allowDrop(event)"></div>
+                <div class="explanation" id="expl-${s.id}"></div>
+                <div class="btn-group">
+                    <button class="btn-reset" onclick="resetAndShuffle(${s.id})">Zurücksetzen und mischen</button>
+                    <button class="btn-sol" onclick="showSolution(${s.id})">Lösung</button>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    }
+
+    // Drag & Drop Logik
+    function allowDrop(ev) { ev.preventDefault(); }
+    
+    function drag(ev) {
+        ev.dataTransfer.setData("text", ev.target.id);
+    }
+
+    function drop(ev) {
+        ev.preventDefault();
+        const data = ev.dataTransfer.getData("text");
+        const draggedElement = document.getElementById(data);
+        const taskId = data.split('-')[1];
+        
+        let target = ev.target;
+        // Sicherstellen, dass wir in die Container droppen, nicht auf Wörter
+        while (target && !target.classList.contains('word-pool') && !target.classList.contains('drop-area')) {
+            target = target.parentNode;
+        }
+
+        if (target && target.id.includes(taskId)) {
+            target.appendChild(draggedElement);
+            checkOrder(taskId);
+        }
+    }
+
+    function checkOrder(taskId) {
+        const targetArea = document.getElementById(`target-${taskId}`);
+        const currentChips = Array.from(targetArea.children);
+        const correctSequence = sentences.find(s => s.id == taskId).words;
+
+        currentChips.forEach((chip, index) => {
+            if (chip.innerText === correctSequence[index]) {
+                chip.classList.add('correct');
+                chip.classList.remove('incorrect');
+            } else {
+                chip.classList.add('incorrect');
+                chip.classList.remove('correct');
+            }
+        });
+
+        // Chips im Pool sind immer neutral
+        const poolArea = document.getElementById(`pool-${taskId}`);
+        Array.from(poolArea.children).forEach(chip => {
+            chip.classList.remove('correct', 'incorrect');
+        });
+    }
+
+    function resetAndShuffle(taskId) {
+        const card = document.getElementById(`card-${taskId}`);
+        const pool = document.getElementById(`pool-${taskId}`);
+        const target = document.getElementById(`target-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+        
+        const sentenceObj = sentences.find(s => s.id == taskId);
+        const reshuffled = shuffleArray(sentenceObj.words);
+
+        target.innerHTML = '';
+        expl.style.display = 'none';
+        
+        pool.innerHTML = reshuffled.map((w, i) => 
+            `<div class="word-chip" draggable="true" ondragstart="drag(event)" id="w-${taskId}-${i}-${Math.random()}">${w}</div>`
+        ).join('');
+    }
+
+    function showSolution(taskId) {
+        const target = document.getElementById(`target-${taskId}`);
+        const pool = document.getElementById(`pool-${taskId}`);
+        const expl = document.getElementById(`expl-${taskId}`);
+        const sentenceObj = sentences.find(s => s.id == taskId);
+
+        // Alle Wörter einsammeln (aus Pool und Ziel)
+        const allChips = [...Array.from(pool.children), ...Array.from(target.children)];
+        target.innerHTML = '';
+        
+        // In korrekter Reihenfolge einfügen
+        sentenceObj.words.forEach(wordStr => {
+            const foundChip = allChips.find(c => c.innerText === wordStr);
+            target.appendChild(foundChip);
+        });
+
+        checkOrder(taskId);
+        expl.innerText = "Grammatik: " + sentenceObj.expl;
+        expl.style.display = 'block';
+    }
+
+    // Initialisierung
+    renderTasks();
+</script>
+
+</body>
+</html>
